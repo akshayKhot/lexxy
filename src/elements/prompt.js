@@ -1,3 +1,94 @@
+/**
+ * <lexxy-prompt> Custom Element
+ *
+ * Trigger-based suggestion system for implementing features like @mentions, /commands, or #hashtags.
+ *
+ * ## Purpose
+ *
+ * This custom element provides a flexible system for showing contextual suggestions when
+ * users type specific trigger characters. It supports multiple loading strategies and
+ * can insert results either as Action Text attachments or as free HTML.
+ *
+ * ## How It Works
+ *
+ * 1. **Trigger Detection**: Monitors editor input for the trigger character:
+ *    - Watches for trigger (e.g., "@") at line start or after whitespace
+ *    - Shows popover immediately after trigger is typed
+ *    - Tracks cursor position to determine when to hide popover
+ *
+ * 2. **Loading Strategies**: Three source strategies via the Strategy pattern:
+ *    - InlinePromptSource: Items embedded in HTML, filtered locally
+ *    - DeferredPromptSource: Fetch all items once, filter locally
+ *    - RemoteFilterSource: Query server with each keystroke
+ *
+ * 3. **Filtering**: As user types, filters visible items:
+ *    - Matches against item's `search` attribute
+ *    - Updates popover to show only matching items
+ *    - Shows "Nothing found" message when no matches
+ *
+ * 4. **Item Selection**: User can select via:
+ *    - Mouse click on item
+ *    - Enter/Tab key to accept highlighted item
+ *    - Space key (if enabled via `supports-space-in-searches`)
+ *    - Arrow keys to navigate up/down
+ *
+ * 5. **Insertion Modes**:
+ *    - **Attachment mode** (default): Inserts as CustomActionTextAttachmentNode with
+ *      SGID for server-side processing. Used for @mentions that need to be resolved
+ *      on the server.
+ *    - **Free text mode** (`insert-editable-text`): Inserts as editable HTML. Used
+ *      for things like emojis or hashtags that don't need server processing.
+ *
+ * 6. **Popover Positioning**: Dynamically positions popover near cursor:
+ *    - Anchors to cursor X position
+ *    - Positions below cursor by default
+ *    - Flips above cursor if clipped at bottom of viewport
+ *
+ * ## Attributes
+ *
+ * - `trigger` (required): Character that activates the prompt (e.g., "@", "#", "/")
+ * - `name`: Identifier for attachment content type (e.g., "mention" → "application/vnd.actiontext.mention")
+ * - `src`: URL to load items remotely
+ * - `remote-filtering`: Enable server-side filtering (queries on each keystroke)
+ * - `insert-editable-text`: Insert as free HTML instead of attachment
+ * - `supports-space-in-searches`: Allow spaces in search queries
+ * - `empty-results`: Custom message when no matches found (default: "Nothing found")
+ *
+ * ## Prompt Items
+ *
+ * Each prompt item is a <lexxy-prompt-item> with:
+ * - `search`: Text to match against when filtering
+ * - `sgid`: Signed GlobalID for Action Text attachments (required unless using insert-editable-text)
+ * - `<template type="menu">`: How item appears in dropdown menu
+ * - `<template type="editor">`: How item appears in editor when selected
+ *
+ * ## Usage Examples
+ *
+ * ### Mentions (Inline):
+ *
+ *     <%= form.rich_text_area :body do %>
+ *       <lexxy-prompt trigger="@" name="mention">
+ *         <% Person.all.each do |person| %>
+ *           <lexxy-prompt-item search="<%= person.name %>" sgid="<%= person.attachable_sgid %>">
+ *             <template type="menu"><%= person.name %></template>
+ *             <template type="editor"><em><%= person.name %></em></template>
+ *           </lexxy-prompt-item>
+ *         <% end %>
+ *       </lexxy-prompt>
+ *     <% end %>
+ *
+ * ### Mentions (Remote):
+ *
+ *     <lexxy-prompt trigger="@" src="/people" name="mention"></lexxy-prompt>
+ *
+ * ### Hashtags (Free Text):
+ *
+ *     <lexxy-prompt trigger="#" src="/hashtags" insert-editable-text></lexxy-prompt>
+ *
+ * @class LexicalPromptElement
+ * @extends HTMLElement
+ */
+
 import { createElement, generateDomId, parseHtml } from "../helpers/html_helper"
 import { getNonce } from "../helpers/csp_helper"
 import { $isTextNode, COMMAND_PRIORITY_HIGH, KEY_ARROW_DOWN_COMMAND, KEY_ARROW_UP_COMMAND, KEY_ENTER_COMMAND, KEY_SPACE_COMMAND, KEY_TAB_COMMAND } from "lexical"

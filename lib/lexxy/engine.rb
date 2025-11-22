@@ -1,3 +1,43 @@
+# frozen_string_literal: true
+
+# = Lexxy::Engine
+#
+# Rails engine that integrates Lexxy into a Rails application.
+#
+# == Purpose
+#
+# This engine handles all the initialization and configuration needed to make Lexxy
+# work seamlessly within a Rails application. It integrates with Action Text, Active Storage,
+# and Rails' asset pipeline.
+#
+# == How It Works
+#
+# The engine performs several key initialization tasks:
+#
+# 1. *Form Helper Integration*: Prepends Lexxy modules to Action Text and ActionView helpers
+#    to provide lexxy_rich_text_area and related methods. Can optionally override the default
+#    rich_text_area helpers to use Lexxy instead of Trix.
+#
+# 2. *Asset Management*: Registers Lexxy's JavaScript and CSS assets with the Rails asset
+#    pipeline, making them available via stylesheet_link_tag and import maps.
+#
+# 3. *HTML Sanitization*: Extends Action Text's allowed HTML tags and attributes to support
+#    Lexxy-specific elements like video, audio, source, and embed tags with controls, poster,
+#    data-language, and style attributes.
+#
+# 4. *Active Storage Extensions*: Adds preview URL generation to Active Storage blobs for
+#    attachments that support previews (PDFs, videos).
+#
+# 5. *Attachable System*: Extends Action Text's attachable resolution to support custom
+#    attachables like remote videos (URLs instead of uploads).
+#
+# == Configuration
+#
+# Configure via config.lexxy in your Rails application:
+#
+#   # config/application.rb
+#   config.lexxy.override_action_text_defaults = false  # Optional: keep Trix as default
+#
 require_relative "rich_text_area_tag"
 require_relative "form_helper"
 require_relative "form_builder"

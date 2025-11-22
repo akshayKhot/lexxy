@@ -1,3 +1,69 @@
+/**
+ * <lexxy-toolbar> Custom Element
+ *
+ * Formatting toolbar component that provides buttons for rich text formatting.
+ *
+ * ## Purpose
+ *
+ * This custom element provides the formatting UI for the Lexxy editor. It displays
+ * buttons for common formatting operations (bold, italic, lists, etc.) and keeps
+ * their states synchronized with the current selection.
+ *
+ * ## How It Works
+ *
+ * 1. **Dynamic Button States**: Listens to editor selection changes and updates button
+ *    states using ARIA attributes:
+ *    - `aria-pressed="true"` when format is active (e.g., bold text selected)
+ *    - `aria-disabled="true"` when action unavailable (e.g., undo with no history)
+ *
+ * 2. **Command Dispatching**: Clicks on buttons dispatch Lexical commands:
+ *    - Data attribute `data-command="bold"` dispatches the bold command
+ *    - Toolbar acts as a bridge between UI clicks and Lexical's command system
+ *
+ * 3. **Keyboard Shortcuts**: Binds hotkeys to buttons via `data-hotkey` attributes:
+ *    - Example: `data-hotkey="cmd+b ctrl+b"` for bold
+ *    - Intercepts keydown events and triggers button clicks
+ *    - Works with multiple modifier key combinations
+ *
+ * 4. **Responsive Overflow**: Automatically moves buttons to an overflow menu when
+ *    the toolbar is too narrow:
+ *    - Uses ResizeObserver to detect width changes
+ *    - Progressively moves buttons to "•••" menu
+ *    - Restores buttons when space becomes available
+ *
+ * 5. **Dialog Management**: Shows/hides dialogs like the link dialog when buttons
+ *    marked with `data-dialog-target` are clicked.
+ *
+ * ## Default Template
+ *
+ * The toolbar provides a default set of formatting buttons via `defaultTemplate`:
+ * - Text formatting: Bold, Italic, Strikethrough
+ * - Links: Insert/edit links
+ * - Block formatting: Quotes, Headings, Code blocks
+ * - Lists: Bullet and numbered lists
+ * - Attachments: Upload files, insert dividers
+ * - History: Undo, Redo
+ *
+ * ## Customization
+ *
+ * You can provide a custom toolbar by:
+ *
+ * 1. Creating external toolbar:
+ *
+ *     <lexxy-toolbar id="my-toolbar">
+ *       <button data-command="bold">B</button>
+ *       <button data-command="italic">I</button>
+ *     </lexxy-toolbar>
+ *     <lexxy-editor toolbar="my-toolbar">...</lexxy-editor>
+ *
+ * 2. Disabling toolbar entirely:
+ *
+ *     <lexxy-editor toolbar="false">...</lexxy-editor>
+ *
+ * @class LexicalToolbarElement
+ * @extends HTMLElement
+ */
+
 import {
   $getSelection,
   $isRangeSelection

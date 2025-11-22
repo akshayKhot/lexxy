@@ -1,3 +1,74 @@
+/**
+ * Selection - Selection Management Sub-System
+ *
+ * Manages editor selection state and provides selection-related utilities.
+ *
+ * ## Purpose
+ *
+ * This class tracks and manages the editor's selection state, providing utilities for:
+ * - Getting cursor position for popover placement
+ * - Navigating between decorator nodes (attachments)
+ * - Preserving selection during operations
+ * - Handling special selection behaviors
+ *
+ * ## How It Works
+ *
+ * 1. **Node Selection Tracking**: Maintains custom selection state for decorator nodes
+ *    (attachments, horizontal dividers). Lexical has two selection types:
+ *    - RangeSelection: Normal text selection
+ *    - NodeSelection: Selecting entire nodes (like images)
+ *
+ * 2. **Visual Feedback**: Adds/removes `node--selected` CSS class to selected decorator
+ *    nodes, syncing with Lexical's internal selection state.
+ *
+ * 3. **Cursor Position Calculation**: Provides precise cursor coordinates for popover
+ *    positioning. Handles edge cases:
+ *    - Empty ranges (collapsed selection)
+ *    - Unreliable getBoundingClientRect() results
+ *    - Inserts temporary marker element when needed
+ *
+ * 4. **Keyboard Navigation**: Intercepts arrow keys to enable:
+ *    - Left/Right: Navigate between decorator nodes
+ *    - Up/Down: Navigate between lines and decorator nodes
+ *    - Backspace/Delete: Select decorator node before/after cursor instead of deleting
+ *
+ * 5. **Special Workarounds**:
+ *    - Safari: Prevents editing issues when only node is an attachment
+ *    - Chrome: Prevents cursor from leaving editor when navigating near decorator nodes
+ *
+ * 6. **Selection Preservation**: `preservingSelection()` method saves and restores
+ *    selection across operations that might lose it.
+ *
+ * ## Key Properties
+ *
+ * - `current`: Current NodeSelection (if any decorator nodes selected)
+ * - `cursorPosition`: {x, y, fontSize} for popover positioning
+ * - `hasSelectedWordsInSingleLine`: True if text selected within one line
+ * - `isInsideList`: True if cursor is in a list
+ * - `nodeAfterCursor`: Next decorator node after cursor
+ * - `nodeBeforeCursor`: Previous decorator node before cursor
+ *
+ * ## Key Methods
+ *
+ * - `preservingSelection(fn)`: Execute fn while preserving selection
+ * - `placeCursorAtTheEnd()`: Move cursor to end of document
+ * - `selectedNodeWithOffset()`: Get current node and offset
+ * - `clear()`: Clear custom selection state
+ *
+ * ## Usage
+ *
+ * Created automatically by the editor:
+ *
+ *     // In editor.js:
+ *     this.selection = new Selection(this)
+ *
+ *     // Used for cursor position:
+ *     const { x, y } = this.selection.cursorPosition
+ *     popover.style.left = `${x}px`
+ *
+ * @class Selection
+ */
+
 import {
   $createNodeSelection, $createParagraphNode, $getNodeByKey, $getRoot, $getSelection, $isElementNode,
   $isLineBreakNode, $isNodeSelection, $isRangeSelection, $isTextNode, $setSelection, COMMAND_PRIORITY_LOW, DecoratorNode,
@@ -28,8 +99,8 @@ export default class Selection {
   set current(selection) {
     if ($isNodeSelection(selection)) {
       this.editor.getEditorState().read(() => {
-        this._current = $getSelection()
-        this.#syncSelectedClasses()
+      this._current = $getSelection()
+      this.#syncSelectedClasses()
       })
     } else {
       this.editor.update(() => {

@@ -1,3 +1,46 @@
+# frozen_string_literal: true
+
+# = Lexxy::TagHelper
+#
+# Form helper module that generates <lexxy-editor> custom elements for rich text editing.
+#
+# == Purpose
+#
+# This module provides the core method for rendering a Lexxy editor instance as a
+# form-compatible custom element. It handles serialization of Action Text content,
+# configures upload URLs for attachments, and processes custom attachables.
+#
+# == How It Works
+#
+# 1. *Value Preparation*: Takes the rich text value (typically an ActionText::RichText
+#    object) and processes it to render any custom attachments, converting them into
+#    inline JSON that the JavaScript editor can understand.
+#
+# 2. *Custom Element Generation*: Creates a <lexxy-editor> HTML element with:
+#    - name attribute for form submission
+#    - value attribute with the initial HTML content
+#    - data-direct-upload-url for Active Storage uploads
+#    - data-blob-url-template for generating blob URLs
+#    - Any child elements passed via block (like <lexxy-prompt>)
+#
+# 3. *Attachment Rendering*: For custom attachments without a URL (mentions, embeds),
+#    renders the attachment using its partial and stores the HTML in a [content] attribute
+#    that the JavaScript editor will parse and display.
+#
+# == Usage
+#
+#   <%= lexxy_rich_textarea_tag "post[body]", @post.body %>
+#
+#   # With options:
+#   <%= lexxy_rich_textarea_tag "post[body]", @post.body, placeholder: "Write something..." %>
+#
+#   # With prompts (block):
+#   <%= lexxy_rich_textarea_tag "post[body]", @post.body do %>
+#     <lexxy-prompt trigger="@" name="mention">
+#       <%= render partial: "people/prompt_item", collection: Person.all %>
+#     </lexxy-prompt>
+#   <% end %>
+#
 module Lexxy
   module TagHelper
     def lexxy_rich_textarea_tag(name, value = nil, options = {}, &block)

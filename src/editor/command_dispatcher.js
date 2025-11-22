@@ -1,3 +1,81 @@
+/**
+ * CommandDispatcher - Command Registration and Dispatch Sub-System
+ *
+ * Central registry for editor commands that bridges UI actions to Lexical operations.
+ *
+ * ## Purpose
+ *
+ * This class acts as a command dispatcher that:
+ * - Registers all editor commands with Lexical
+ * - Translates toolbar button clicks to Lexical commands
+ * - Handles drag & drop file uploads
+ * - Provides dispatch methods for each command
+ *
+ * ## How It Works
+ *
+ * 1. **Command Registration**: Automatically registers 13 core commands:
+ *    - Text formatting: bold, italic, strikethrough
+ *    - Links: link, unlink
+ *    - Block formatting: rotateHeadingFormat, insertQuoteBlock, insertCodeBlock
+ *    - Lists: insertUnorderedList, insertOrderedList
+ *    - Content: insertHorizontalDivider, uploadAttachments
+ *    - History: undo, redo
+ *
+ * 2. **Lexical Command System**: Uses Lexical's command pattern:
+ *    - Commands are strings like "bold", "italic", FORMAT_TEXT_COMMAND
+ *    - Multiple handlers can register for same command
+ *    - Handlers have priorities (LOW, NORMAL, HIGH)
+ *    - Return true to stop propagation, false to continue
+ *
+ * 3. **Smart Toggling**: Many commands check current state before acting:
+ *    - Bold on bold text → unbold
+ *    - Quote on quoted text → unquote
+ *    - List on list items → convert to paragraphs
+ *
+ * 4. **Heading Rotation**: dispatchRotateHeadingFormat() cycles through:
+ *    - Paragraph → H2 → H3 → H4 → Paragraph
+ *    - Provides quick heading level changes with one button
+ *
+ * 5. **Code Context Awareness**: dispatchInsertCodeBlock() checks selection:
+ *    - Selected words in single line → inline code format (FORMAT_TEXT_COMMAND)
+ *    - Multi-line selection → code block (CodeNode wrapper)
+ *
+ * 6. **Drag & Drop**: Registers dragover, dragenter, dragleave, drop handlers:
+ *    - Adds visual feedback (lexxy-editor--drag-over class)
+ *    - Prevents default browser behavior
+ *    - Uploads dropped files via contents.uploadFile()
+ *
+ * ## Command Flow
+ *
+ * 1. User clicks toolbar button with `data-command="bold"`
+ * 2. Toolbar dispatches Lexical command: `editor.dispatchCommand("bold")`
+ * 3. CommandDispatcher's registered handler receives command
+ * 4. Handler calls `dispatchBold()`
+ * 5. `dispatchBold()` dispatches `FORMAT_TEXT_COMMAND` with "bold" payload
+ * 6. Lexical applies bold format to selection
+ *
+ * ## Commands List
+ *
+ * - **bold, italic, strikethrough**: Text formatting
+ * - **link, unlink**: Link management
+ * - **insertUnorderedList, insertOrderedList**: List creation/toggling
+ * - **insertQuoteBlock**: Quote block toggling
+ * - **insertCodeBlock**: Code block/inline code
+ * - **rotateHeadingFormat**: Cycle heading levels
+ * - **insertHorizontalDivider**: Insert HR
+ * - **uploadAttachments**: File picker for uploads
+ * - **undo, redo**: History navigation
+ *
+ * ## Usage
+ *
+ * Configured automatically during editor initialization:
+ *
+ *     // In editor.js connectedCallback:
+ *     CommandDispatcher.configureFor(this)
+ *
+ * @class CommandDispatcher
+ */
+
 import {
   $createTextNode,
   $getSelection,

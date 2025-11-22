@@ -1,3 +1,80 @@
+/**
+ * Clipboard - Paste Handling Sub-System
+ *
+ * Handles clipboard paste events with special behaviors for URLs and markdown.
+ *
+ * ## Purpose
+ *
+ * This class intercepts paste events to provide smart paste behaviors beyond Lexical's
+ * default handling. It detects URLs, markdown, and files to provide a better editing
+ * experience.
+ *
+ * ## How It Works
+ *
+ * 1. **Paste Detection**: Listens to paste events and examines clipboard data:
+ *    - Checks MIME types (text/plain vs text/html)
+ *    - Determines if plain text only or rich HTML
+ *    - Extracts files from clipboard
+ *
+ * 2. **URL Detection**: When plain text paste is a URL:
+ *    - If text is selected: Creates link with selected text
+ *    - If no selection: Inserts clickable link
+ *    - Dispatches `lexxy:insert-link` event with manipulation callbacks:
+ *      - `replaceLinkWith(html, options)`: Replace link with custom HTML
+ *      - `insertBelowLink(html, options)`: Insert content below link
+ *    - This enables link unfurling (fetching metadata and showing previews)
+ *
+ * 3. **Markdown Conversion**: For plain text that isn't a URL:
+ *    - Converts markdown to HTML via marked library
+ *    - Inserts as rich content
+ *    - Supports headings, lists, code blocks, etc.
+ *
+ * 4. **File Handling**: When files are pasted (e.g., screenshots):
+ *    - Ignores if HTML data present (copied from browser)
+ *    - Uploads each file via contents.uploadFile()
+ *    - Preserves scroll position (Safari workaround)
+ *
+ * 5. **Code Block Preservation**: Disables smart paste behaviors when pasting into
+ *    code blocks, allowing literal text paste without markdown conversion.
+ *
+ * ## Special Behaviors
+ *
+ * ### Link Unfurling
+ *
+ * When a URL is pasted, you can intercept and replace it:
+ *
+ *     editorElement.addEventListener("lexxy:insert-link", (event) => {
+ *       const { url, replaceLinkWith } = event.detail
+ *       fetchMetadata(url).then(metadata => {
+ *         replaceLinkWith(`<div>${metadata.title}</div>`)
+ *       })
+ *     })
+ *
+ * ### Markdown Examples
+ *
+ * Pasting:
+ *     # Heading
+ *     - List item
+ *     **Bold text**
+ *
+ * Converts to:
+ *     <h2>Heading</h2>
+ *     <ul><li>List item</li></ul>
+ *     <p><strong>Bold text</strong></p>
+ *
+ * ## Usage
+ *
+ * Created automatically by the editor and registered with CommandDispatcher:
+ *
+ *     // In editor.js:
+ *     this.clipboard = new Clipboard(this)
+ *
+ *     // CommandDispatcher registers it for PASTE_COMMAND:
+ *     this.editor.registerCommand(PASTE_COMMAND, this.clipboard.paste)
+ *
+ * @class Clipboard
+ */
+
 import { marked } from "marked"
 import { isUrl } from "../helpers/string_helper"
 import { nextFrame } from "../helpers/timing_helpers"

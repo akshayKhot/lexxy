@@ -1,3 +1,84 @@
+/**
+ * ActionTextAttachmentNode - Lexical Node for Action Text Attachments
+ *
+ * Represents file attachments (images, PDFs, documents) in the Lexical editor.
+ *
+ * ## Purpose
+ *
+ * This custom Lexical node provides:
+ * - Visual representation of attachments in the editor
+ * - Bidirectional conversion between Lexical and Action Text HTML
+ * - Image previews with editable captions
+ * - File metadata display (name, size, extension)
+ *
+ * ## How It Works
+ *
+ * 1. **Lexical Integration**: Extends DecoratorNode, Lexical's base class for custom
+ *    content that doesn't follow normal text node rules. Decorator nodes:
+ *    - Render custom DOM that Lexical doesn't try to edit
+ *    - Can be block-level (images) or inline (badges)
+ *    - Handle their own click/interaction logic
+ *
+ * 2. **Bidirectional Conversion**:
+ *    - **Import** (HTML → Lexical): When loading content, importDOM() converts
+ *      <action-text-attachment> tags to ActionTextAttachmentNode instances
+ *    - **Export** (Lexical → HTML): When submitting form, exportDOM() converts
+ *      node instances to <action-text-attachment> tags for Action Text
+ *
+ * 3. **Two Display Modes**:
+ *    - **Previewable** (images, PDFs, videos): Shows preview with editable caption
+ *    - **Non-previewable** (documents, archives): Shows file icon with name and size
+ *
+ * 4. **Editable Captions**: For previewable attachments:
+ *    - Textarea for caption input
+ *    - Auto-grows with content
+ *    - Enter key moves to next line (doesn't submit)
+ *    - Updates node state on blur
+ *
+ * 5. **Node Selection**: Clicking attachment fires internal event to select the entire
+ *    node, allowing keyboard navigation and deletion.
+ *
+ * ## Action Text Format
+ *
+ * Exports as standard Action Text attachment format:
+ *
+ *     <action-text-attachment
+ *       sgid="BAh7CEkiCG..."
+ *       content-type="image/png"
+ *       url="/rails/active_storage/blobs/..."
+ *       filename="photo.png"
+ *       filesize="524288"
+ *       width="1920"
+ *       height="1080"
+ *       previewable="true"
+ *       presentation="gallery">
+ *     </action-text-attachment>
+ *
+ * ## Data Flow
+ *
+ * 1. User uploads file via ActionTextAttachmentUploadNode
+ * 2. On upload success, replaced with ActionTextAttachmentNode
+ * 3. Node stores: sgid, src, contentType, fileName, fileSize, width, height, caption
+ * 4. On form submit, exports to <action-text-attachment> HTML
+ * 5. Action Text resolves sgid to Active Storage attachment
+ * 6. Renders using app/views/active_storage/blobs/_blob.html.erb
+ *
+ * ## Node Properties
+ *
+ * - `sgid`: Signed GlobalID for resolving attachment on server
+ * - `src`: URL to attachment or preview
+ * - `previewable`: Whether attachment can show preview
+ * - `contentType`: MIME type (image/png, application/pdf, etc.)
+ * - `fileName`: Original filename
+ * - `fileSize`: Size in bytes
+ * - `width, height`: Image dimensions (for layout stability)
+ * - `caption`: User-entered caption
+ * - `altText`: Alt text for images
+ *
+ * @class ActionTextAttachmentNode
+ * @extends DecoratorNode
+ */
+
 import { DecoratorNode } from "lexical"
 import { createAttachmentFigure, createElement, dispatchCustomEvent, isPreviewableImage } from "../helpers/html_helper"
 import { bytesToHumanSize } from "../helpers/storage_helper"

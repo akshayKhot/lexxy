@@ -1,3 +1,81 @@
+/**
+ * ActionTextAttachmentUploadNode - Temporary Node During File Upload
+ *
+ * Shows upload progress while file is being uploaded to Active Storage.
+ *
+ * ## Purpose
+ *
+ * This node provides immediate visual feedback when a user uploads a file. It:
+ * - Shows a preview or file icon immediately (before upload completes)
+ * - Displays a progress bar showing upload percentage
+ * - Handles the Direct Upload flow with Active Storage
+ * - Replaces itself with ActionTextAttachmentNode on success
+ *
+ * ## How It Works
+ *
+ * 1. **Immediate Insertion**: Created instantly when user:
+ *    - Drops a file onto the editor
+ *    - Pastes a file from clipboard
+ *    - Clicks upload button and selects file
+ *
+ * 2. **Preview Loading**: For images:
+ *    - Loads file into <img> element using FileReader
+ *    - Shows preview immediately (before upload)
+ *    - Extracts dimensions for layout stability
+ *
+ * 3. **Active Storage Direct Upload**:
+ *    - Uses @rails/activestorage DirectUpload class
+ *    - Uploads directly to cloud storage (S3, GCS, etc.)
+ *    - Tracks progress via XHR progress events
+ *    - Updates progress bar as upload proceeds
+ *
+ * 4. **Progress Display**: Shows <progress> element:
+ *    - Updates from 0-100 as upload proceeds
+ *    - Hidden when upload completes
+ *
+ * 5. **Node Replacement**: On upload success:
+ *    - Fetches blob metadata from server
+ *    - If previewable, loads preview image
+ *    - Replaces self with ActionTextAttachmentNode
+ *    - Uses HISTORY_MERGE_TAG to merge with previous history entry
+ *
+ * 6. **Error Handling**: On upload failure:
+ *    - Shows error message
+ *    - Adds "attachment--error" class for styling
+ *    - User can delete and retry
+ *
+ * ## Upload Flow
+ *
+ * 1. User drops file → contents.uploadFile(file)
+ * 2. Creates ActionTextAttachmentUploadNode with file, uploadUrl
+ * 3. Node inserted into editor immediately
+ * 4. createDOM() starts upload in background
+ * 5. Progress events update progress bar
+ * 6. On completion, receives blob metadata
+ * 7. Replaces self with ActionTextAttachmentNode
+ * 8. User sees final attachment with proper URLs
+ *
+ * ## Why Separate Node?
+ *
+ * Having a separate upload node allows:
+ * - Immediate feedback (no waiting for upload)
+ * - Progress indication
+ * - Cleaner separation between "uploading" and "uploaded" states
+ * - Ability to cancel uploads (future feature)
+ *
+ * ## Node Properties
+ *
+ * - `file`: JavaScript File object being uploaded
+ * - `uploadUrl`: Active Storage Direct Upload endpoint
+ * - `blobUrlTemplate`: Template for generating blob URLs
+ * - `editor`: Reference to Lexical editor (for updates)
+ * - `progress`: Current upload progress (0-100)
+ * - Inherits properties from ActionTextAttachmentNode
+ *
+ * @class ActionTextAttachmentUploadNode
+ * @extends ActionTextAttachmentNode
+ */
+
 import { $getNodeByKey } from "lexical"
 import { DirectUpload } from "@rails/activestorage"
 import { ActionTextAttachmentNode } from "./action_text_attachment_node"

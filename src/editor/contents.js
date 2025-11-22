@@ -1,3 +1,72 @@
+/**
+ * Contents - Content Manipulation Sub-System
+ *
+ * High-level API for manipulating editor content.
+ *
+ * ## Purpose
+ *
+ * This class provides a high-level interface for common content manipulation operations,
+ * abstracting away Lexical's low-level node APIs. It handles complex operations like
+ * toggling formatting, managing lists, uploading files, and replacing text.
+ *
+ * ## How It Works
+ *
+ * 1. **Abstraction Layer**: Wraps Lexical's $-prefixed functions in methods that handle
+ *    common patterns. For example, insertHtml() internally:
+ *    - Parses HTML string into DOM
+ *    - Converts DOM to Lexical nodes via $generateNodesFromDOM
+ *    - Inserts nodes at current selection
+ *
+ * 2. **Block Formatting**: Methods like toggleNodeWrappingAllSelectedLines() handle
+ *    complex formatting toggling:
+ *    - Check if format already applied
+ *    - If yes, remove wrapping (e.g., unwrap quote block)
+ *    - If no, wrap selected content in format node
+ *
+ * 3. **List Management**: Provides list-specific operations:
+ *    - Convert list items to paragraphs
+ *    - Handle nested lists correctly
+ *    - Clean up empty parent lists
+ *
+ * 4. **File Uploads**: Manages the attachment upload flow:
+ *    - Creates ActionTextAttachmentUploadNode (shows progress)
+ *    - Uploads via Active Storage Direct Upload
+ *    - Replaces with ActionTextAttachmentNode on success
+ *    - Dispatches lexxy:file-accept event (cancellable)
+ *
+ * 5. **Text Replacement**: Powers prompt functionality:
+ *    - Finds trigger text before cursor
+ *    - Replaces it with custom nodes (attachments or HTML)
+ *    - Handles cursor positioning after replacement
+ *
+ * 6. **Format Escaping**: Integrates FormatEscaper to handle the "space after formatted
+ *    text" problem where typing at the end of bold text makes the new text bold.
+ *
+ * ## Key Methods
+ *
+ * - `insertHtml(html)`: Insert HTML at cursor
+ * - `insertAtCursor(node)`: Insert Lexical node at cursor
+ * - `toggleNodeWrappingAllSelectedLines()`: Toggle block formats like code/quote
+ * - `uploadFile(file)`: Upload file as attachment
+ * - `createLink(url)`: Create link at cursor
+ * - `textBackUntil(string)`: Get text from cursor back to string (for prompts)
+ * - `replaceTextBackUntil(string, nodes)`: Replace text with nodes (for prompts)
+ * - `unwrapSelectedListItems()`: Convert list items to paragraphs
+ *
+ * ## Usage
+ *
+ * Created automatically by the editor element:
+ *
+ *     // In editor.js:
+ *     this.contents = new Contents(this)
+ *
+ *     // Used throughout editor:
+ *     this.contents.uploadFile(file)
+ *     this.contents.insertHtml("<p>Hello</p>")
+ *
+ * @class Contents
+ */
+
 import {
   $createLineBreakNode, $createParagraphNode, $createTextNode, $getNodeByKey, $getRoot, $getSelection, $insertNodes,
   $isElementNode, $isLineBreakNode, $isNodeSelection, $isParagraphNode, $isRangeSelection, $isTextNode, $setSelection, HISTORY_MERGE_TAG

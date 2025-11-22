@@ -1,3 +1,100 @@
+/**
+ * FormatEscaper - Handles Escaping from Block Formats
+ *
+ * Manages the escape behavior when pressing Enter in empty blockquotes or list items.
+ *
+ * ## The Problem
+ *
+ * In rich text editors, users often want to "escape" from block formats by pressing
+ * Enter on an empty line:
+ *
+ * - In a blockquote with empty paragraph: Exit the blockquote
+ * - In an empty list item: Convert to paragraph
+ * - In an empty list item within blockquote: More complex escape logic
+ *
+ * ## Purpose
+ *
+ * This class provides intuitive escape behavior for block-level formatting, making
+ * it easy for users to exit formatted blocks and continue with normal paragraphs.
+ *
+ * ## How It Works
+ *
+ * 1. **Enter Key Interception**: Registers high-priority handler for KEY_ENTER_COMMAND
+ *    (runs before Lexical's default Enter handling)
+ *
+ * 2. **Context Detection**: When Enter pressed, determines:
+ *    - Is cursor in a blockquote?
+ *    - Is it an empty paragraph?
+ *    - Is it an empty list item?
+ *    - Are there siblings after the empty node?
+ *
+ * 3. **Escape Strategies**:
+ *    - **Empty list item**: Convert to paragraph after list
+ *    - **Empty blockquote paragraph**: Create paragraph after blockquote
+ *    - **Complex nested**: Split blockquotes and lists appropriately
+ *
+ * 4. **Smart Splitting**: If there's content after the empty node:
+ *    - Splits the blockquote into two parts
+ *    - Places new paragraph between them
+ *    - Preserves content structure
+ *
+ * 5. **Cleanup**: Removes trailing empty nodes to keep structure clean
+ *
+ * ## User Experience Examples
+ *
+ * ### Escape from Blockquote
+ *
+ * Before:
+ *     > Some quoted text
+ *     > |  (cursor on empty line)
+ *
+ * Press Enter:
+ *     > Some quoted text
+ *     |  (cursor on normal paragraph)
+ *
+ * ### Escape from List
+ *
+ * Before:
+ *     - Item 1
+ *     - Item 2
+ *     - |  (empty item, cursor here)
+ *
+ * Press Enter:
+ *     - Item 1
+ *     - Item 2
+ *     |  (cursor on normal paragraph)
+ *
+ * ### Complex: List in Blockquote with Content After
+ *
+ * Before:
+ *     > - Item 1
+ *     > - |  (empty, cursor here)
+ *     > - Item 3
+ *
+ * Press Enter:
+ *     > - Item 1
+ *     |  (cursor on normal paragraph)
+ *     > - Item 3
+ *
+ * ## Empty Node Detection
+ *
+ * A node is considered empty if:
+ * - Text content is empty or only whitespace
+ * - Contains only line breaks
+ * - All children are empty (recursive check)
+ *
+ * ## Integration
+ *
+ * Automatically enabled in Contents constructor:
+ *
+ *     // In contents.js:
+ *     new FormatEscaper(editorElement).monitor()
+ *
+ * Registers with HIGH priority to intercept Enter before default behavior.
+ *
+ * @class FormatEscaper
+ */
+
 import { $createParagraphNode, $getSelection, $isLineBreakNode, $isParagraphNode, $isRangeSelection, COMMAND_PRIORITY_HIGH, KEY_ENTER_COMMAND } from "lexical"
 import { $createListNode, $isListItemNode, $isListNode } from "@lexical/list"
 import { $createQuoteNode, $isQuoteNode } from "@lexical/rich-text"
